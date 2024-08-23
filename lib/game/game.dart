@@ -6,10 +6,12 @@ import 'package:flame/game.dart';
 import 'package:flame/sprite.dart';
 import 'package:test_app/game/bullet.dart';
 import 'package:test_app/game/player.dart';
+import 'dart:math' as math;
 import 'package:vector_math/vector_math_64.dart' as vmath;
 
 class MainGame extends FlameGame with PanDetector {
   late Player player;
+  late Player player2;
   vmath.Vector2? _pointerStartPosition;
   late Timer _bulletTimer;  // Timer to shoot bullets
   late SpriteSheet spriteSheet;
@@ -26,15 +28,35 @@ class MainGame extends FlameGame with PanDetector {
 
     // Set initial position to be in the lower half of the screen
     final initialPosition = vmath.Vector2(size.x / 2, size.y * 3 / 4);
+    final initialPosition2 = vmath.Vector2(size.x / 2, size.y * 1 / 4);
 
     player = Player(
       sprite: spriteSheet.getSpriteById(6),
       size: vmath.Vector2(64, 64),
       position: initialPosition,
+      name: "firstPlayer",
+      playerShootVector: Vector2(0, -1),
     );
 
     player.anchor = Anchor.center;
     add(player);
+
+    player2 = Player(
+      sprite: spriteSheet.getSpriteById(6),
+      size: vmath.Vector2(64, 64),
+      position: initialPosition2,
+      name: "secondPlayer",
+      playerShootVector: Vector2(0, 1),
+    );
+
+    // Set the anchor to center
+    player2.anchor = Anchor.center;
+
+    // Rotate the sprite by 180 degrees (π radians)+
+    player2.angle = math.pi;
+
+    // Add player2 to the game world
+    add(player2);
 
     // Initialize the bullet shooting timer
     _bulletTimer = Timer(0.5, repeat: true, onTick: _shootBullet)..start();
@@ -46,9 +68,25 @@ class MainGame extends FlameGame with PanDetector {
       sprite: spriteSheet.getSpriteById(29),
       size: vmath.Vector2(16, 32),
       position: player.getBulletSpawnPosition(),
+      shootVector: player.playerShootVector,
+      shooterName: player.name
     );
+
     add(bullet);
+
+    final bullet2 = Bullet(
+      sprite: spriteSheet.getSpriteById(29),
+      size: vmath.Vector2(16, 32),
+      position: player2.getBulletSpawnPosition(),
+      shootVector: player2.playerShootVector,
+      shooterName: player2.name
+    );
+
+    bullet2.angle = math.pi;
+
+    add(bullet2);
   }
+
 
   @override
   void update(double dt) {
