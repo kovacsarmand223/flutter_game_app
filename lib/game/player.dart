@@ -4,15 +4,19 @@ class Player extends SpriteComponent {
   Vector2 _moveDir = Vector2(0, 0);
   double _speed = 500.0;
   String name = "";
-  late Vector2 playerShootVector; // Default value
+  late Vector2 playerShootVector;
+  bool isAlive = true;
+  late Vector2 bulletOffset;
 
   Player({
     super.sprite,
     super.position,
     super.size,
     required this.name,
+    Vector2? bulletOffset,
     Vector2? playerShootVector,
-  }) : playerShootVector = playerShootVector ?? Vector2(0, -1); // Use default if null
+  }) : playerShootVector = playerShootVector ?? Vector2(0, -1),
+        bulletOffset = bulletOffset ?? Vector2(0, 0); // Use default if null
 
 
   @override
@@ -29,6 +33,6 @@ class Player extends SpriteComponent {
 
   // Method to get the bullet spawn position
   Vector2 getBulletSpawnPosition() {
-    return position + Vector2(-8, -size.y / 2); // Top-center of the player
+    return position + bulletOffset; // Top-center of the player
   }
 }

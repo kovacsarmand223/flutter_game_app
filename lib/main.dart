@@ -1,14 +1,14 @@
-import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
-import 'package:test_app/game/game.dart';
+import 'package:test_app/game/menu.dart';
 
 void main() {
   runApp(
-    GameWidget(
-      game: MainGame(),
+    MaterialApp(
+      title: 'Multiplayer Game',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: MenuScreen(),  // Set GameScreen as the home widget
     ),
   );
 }
-
-
-

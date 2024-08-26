@@ -16,7 +16,7 @@ extension IterableExtensions<E> on Iterable<E> {
 }
 
 class Bullet extends SpriteComponent {
-  double _speed = 300;
+  double _speed = 200;
   Vector2 shootVector;
   String shooterName = "";
 
@@ -34,7 +34,6 @@ class Bullet extends SpriteComponent {
 
     // Move the bullet upwards
     position += shootVector * _speed * dt;
-    print(shootVector);
 
     // Remove the bullet if it goes off-screen
     if (position.y < 0) {
@@ -53,6 +52,7 @@ class Bullet extends SpriteComponent {
     // If player2 exists and collides with the bullet, remove both
     if (player2 != null) {
       player2.removeFromParent();
+      player2.isAlive = false;
       removeFromParent();
     }
   }

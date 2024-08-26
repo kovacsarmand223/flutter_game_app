@@ -1,20 +1,22 @@
-import 'dart:ui';
-
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/sprite.dart';
+import 'package:flutter/material.dart';
 import 'package:test_app/game/bullet.dart';
 import 'package:test_app/game/player.dart';
 import 'dart:math' as math;
-import 'package:vector_math/vector_math_64.dart' as vmath;
 
 class MainGame extends FlameGame with PanDetector {
+  late final BuildContext context;
   late Player player;
   late Player player2;
-  vmath.Vector2? _pointerStartPosition;
+  Vector2? _pointerStartPosition;
   late Timer _bulletTimer;  // Timer to shoot bullets
   late SpriteSheet spriteSheet;
+  bool _isGameOver = false; // Flag to indicate if the game is over
+
+  MainGame(this.context);
 
   @override
   Future<void> onLoad() async {
@@ -26,15 +28,16 @@ class MainGame extends FlameGame with PanDetector {
       rows: 6,
     );
 
-    // Set initial position to be in the lower half of the screen
-    final initialPosition = vmath.Vector2(size.x / 2, size.y * 3 / 4);
-    final initialPosition2 = vmath.Vector2(size.x / 2, size.y * 1 / 4);
+    // 30 -> offset to not start at the middle with the ship
+    final initialPosition = Vector2(size.x / 2, (size.y * 3 / 4) + 30);
+    final initialPosition2 = Vector2(size.x / 2, (size.y * 1 / 4) - 30);
 
     player = Player(
       sprite: spriteSheet.getSpriteById(6),
-      size: vmath.Vector2(64, 64),
+      size: Vector2(64, 64),
       position: initialPosition,
-      name: "firstPlayer",
+      name: "Józsi",
+      bulletOffset: Vector2(-10, -45),
       playerShootVector: Vector2(0, -1),
     );
 
@@ -43,43 +46,41 @@ class MainGame extends FlameGame with PanDetector {
 
     player2 = Player(
       sprite: spriteSheet.getSpriteById(6),
-      size: vmath.Vector2(64, 64),
+      size: Vector2(64, 64),
       position: initialPosition2,
-      name: "secondPlayer",
+      name: "Pityu",
+      bulletOffset: Vector2(10, 45),
       playerShootVector: Vector2(0, 1),
     );
 
-    // Set the anchor to center
     player2.anchor = Anchor.center;
-
-    // Rotate the sprite by 180 degrees (π radians)+
     player2.angle = math.pi;
 
-    // Add player2 to the game world
     add(player2);
 
-    // Initialize the bullet shooting timer
-    _bulletTimer = Timer(0.5, repeat: true, onTick: _shootBullet)..start();
+    _bulletTimer = Timer(2.0, repeat: true, onTick: _shootBullet)..start();
   }
 
   void _shootBullet() {
-    // Create a bullet at the player's position
+    // Prevent shooting if game is over
+    if (_isGameOver) return;
+
     final bullet = Bullet(
-      sprite: spriteSheet.getSpriteById(29),
-      size: vmath.Vector2(16, 32),
-      position: player.getBulletSpawnPosition(),
-      shootVector: player.playerShootVector,
-      shooterName: player.name
+        sprite: spriteSheet.getSpriteById(29),
+        size: Vector2(16, 32),
+        position: player.getBulletSpawnPosition(),
+        shootVector: player.playerShootVector,
+        shooterName: player.name
     );
 
     add(bullet);
 
     final bullet2 = Bullet(
-      sprite: spriteSheet.getSpriteById(29),
-      size: vmath.Vector2(16, 32),
-      position: player2.getBulletSpawnPosition(),
-      shootVector: player2.playerShootVector,
-      shooterName: player2.name
+        sprite: spriteSheet.getSpriteById(29),
+        size: Vector2(16, 32),
+        position: player2.getBulletSpawnPosition(),
+        shootVector: player2.playerShootVector,
+        shooterName: player2.name
     );
 
     bullet2.angle = math.pi;
@@ -87,16 +88,27 @@ class MainGame extends FlameGame with PanDetector {
     add(bullet2);
   }
 
-
   @override
   void update(double dt) {
     super.update(dt);
+    if (_isGameOver) return; // Skip updates if game is over
+
     _bulletTimer.update(dt);  // Update the timer
+
+    if (!player2.isAlive) {
+      _isGameOver = true;
+      showGameOverDialog(player.name);
+    }
+
+    if (!player.isAlive) {
+      _isGameOver = true;
+      showGameOverDialog(player2.name);
+    }
   }
 
   @override
   void onPanDown(DragDownInfo info) {
-    // Handle the pan down event here if needed
+    // Handle pan down event if needed
   }
 
   @override
@@ -106,39 +118,38 @@ class MainGame extends FlameGame with PanDetector {
 
   @override
   void onPanUpdate(DragUpdateInfo info) {
-    final pointerCurrentPosition = info.eventPosition.global;
+    if (_isGameOver) return; // Skip pan updates if game is over
 
-    // Calculate movement delta
+    final pointerCurrentPosition = info.eventPosition.global;
     var delta = pointerCurrentPosition - _pointerStartPosition!;
 
-    // Update player's position
     player.position.add(delta);
-
-    // Keep the player within the lower half of the screen bounds
     player.position.x = player.position.x.clamp(0 + player.size.x / 2, size.x - player.size.x / 2);
     player.position.y = player.position.y.clamp(size.y / 2 + player.size.y / 2, size.y - player.size.y / 2);
 
-    // Update the pointer start position to the current position
     _pointerStartPosition = pointerCurrentPosition;
   }
 
   @override
   void onPanEnd(DragEndInfo info) {
     _pointerStartPosition = null;
-    player.setMoveDir(Vector2(0, 0));
+    if (!_isGameOver) {
+      player.setMoveDir(Vector2(0, 0));
+    }
   }
 
   @override
   void onPanCancel() {
     _pointerStartPosition = null;
-    player.setMoveDir(Vector2(0, 0));
+    if (!_isGameOver) {
+      player.setMoveDir(Vector2(0, 0));
+    }
   }
 
   @override
   void render(Canvas canvas) {
     super.render(canvas);
 
-    // Draw a line at the half of the screen (x-axis)
     final paint = Paint()
       ..color = Color(0xFFFFFFFF) // White color
       ..strokeWidth = 2;
@@ -149,4 +160,27 @@ class MainGame extends FlameGame with PanDetector {
       paint,
     );
   }
+
+  void showGameOverDialog(String winnerName) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Game Over'),
+          content: Text('The winner is $winnerName!'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).popUntil((route) => route.isFirst); // Navigate back to the root (MenuScreen)
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 }
+
