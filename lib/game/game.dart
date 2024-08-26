@@ -7,10 +7,14 @@ import 'package:test_app/game/bullet.dart';
 import 'package:test_app/game/player.dart';
 import 'dart:math' as math;
 
+import 'package:test_app/game/strip.dart';
+
 class MainGame extends FlameGame with PanDetector {
   late final BuildContext context;
   late Player player;
   late Player player2;
+  late Strip strip;
+  late Strip strip2;
   Vector2? _pointerStartPosition;
   late Timer _bulletTimer;  // Timer to shoot bullets
   late SpriteSheet spriteSheet;
@@ -32,6 +36,8 @@ class MainGame extends FlameGame with PanDetector {
     final initialPosition = Vector2(size.x / 2, (size.y * 3 / 4) + 30);
     final initialPosition2 = Vector2(size.x / 2, (size.y * 1 / 4) - 30);
 
+    //TODO: HOZZAADNI A SZINES SAVOKAT A HAJOK UTAN
+
     player = Player(
       sprite: spriteSheet.getSpriteById(6),
       size: Vector2(64, 64),
@@ -43,6 +49,15 @@ class MainGame extends FlameGame with PanDetector {
 
     player.anchor = Anchor.center;
     add(player);
+
+    strip = Strip(
+      sprite: spriteSheet.getSpriteById(46),
+      size: Vector2(64, 64),
+      position: player.position + Vector2(10, 10),
+      moveDir:
+    );
+    strip.anchor = Anchor.center;
+    add(strip);
 
     player2 = Player(
       sprite: spriteSheet.getSpriteById(6),
@@ -57,6 +72,15 @@ class MainGame extends FlameGame with PanDetector {
     player2.angle = math.pi;
 
     add(player2);
+
+    strip2 = Strip(
+      sprite: spriteSheet.getSpriteById(47),
+      size: Vector2(64, 64),
+      position: player2.position + Vector2(-10, -10),
+    );
+    strip2.anchor = Anchor.center;
+    strip2.angle = math.pi;
+    add(strip2);
 
     _bulletTimer = Timer(2.0, repeat: true, onTick: _shootBullet)..start();
   }
